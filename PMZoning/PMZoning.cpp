@@ -37,6 +37,8 @@ void PMZoning::update() {
 		needs[i] = 0;
 	}
 
+	Mat_<uchar> new_zones(zones.size());
+
 	for (int r = 0; r < grid_size; ++r) {
 		for (int c = 0; c < grid_size; ++c) {
 			if (zones(r, c) == TYPE_UNUSED) continue;
@@ -47,24 +49,39 @@ void PMZoning::update() {
 			vector<int> neighbors;
 			computeMooreNeighborhood(r, c, neighbors);
 
-			if (neighbors[TYPE_COMMERCIAL] + accessibility(r, c)*2.0f >= Util::genRand(2, 5) + 4.0 / (1.0f + expf(needs[TYPE_COMMERCIAL]))) {
-				zones(r, c) = TYPE_COMMERCIAL;
-			} else if (neighbors[TYPE_INDUSTRIAL] + accessibility(r, c)*2.0f >= Util::genRand(2, 5) + 4.0 / (1.0f + expf(needs[TYPE_INDUSTRIAL]))) {
-				zones(r, c) = TYPE_INDUSTRIAL;
+#if 1
+			// simple + accessibility
+			if (neighbors[TYPE_COMMERCIAL] + accessibility(r, c) * 2.0f >= Util::genRand(1, 6) + 4.0 / (1.0f + expf(needs[TYPE_COMMERCIAL]))) {
+				new_zones(r, c) = TYPE_COMMERCIAL;
+			} else if (neighbors[TYPE_INDUSTRIAL] + accessibility(r, c) * 2.0f >= Util::genRand(1, 6) + 4.0 / (1.0f + expf(needs[TYPE_INDUSTRIAL]))) {
+				new_zones(r, c) = TYPE_INDUSTRIAL;
 			} else if (neighbors[TYPE_PARK] >= Util::genRand(1, 3) + 4.0 / (1.0f + expf(needs[TYPE_PARK]))) {
-				zones(r, c) = TYPE_PARK;
+				new_zones(r, c) = TYPE_PARK;
 			} else {
-				zones(r, c) = TYPE_RESIDENTIAL;
+				new_zones(r, c) = TYPE_RESIDENTIAL;
 			}
+#endif
+
+#if 0
+			// simple update
+			if (neighbors[TYPE_COMMERCIAL] >= Util::genRand(1, 3) + 4.0 / (1.0f + expf(needs[TYPE_COMMERCIAL]))) {
+				new_zones(r, c) = TYPE_COMMERCIAL;
+			} else if (neighbors[TYPE_INDUSTRIAL] >= Util::genRand(1, 3) + 4.0 / (1.0f + expf(needs[TYPE_INDUSTRIAL]))) {
+				new_zones(r, c) = TYPE_INDUSTRIAL;
+			} else if (neighbors[TYPE_PARK] >= Util::genRand(1, 3) + 4.0 / (1.0f + expf(needs[TYPE_PARK]))) {
+				new_zones(r, c) = TYPE_PARK;
+			} else {
+				new_zones(r, c) = TYPE_RESIDENTIAL;
+			}
+#endif
 
 			// ゾーンタイプのニーズを更新
 			needs[oldType]++;
-			needs[zones(r, c)]--;
+			needs[new_zones(r, c)]--;
 		}
 	}
-
-	// distributionに合わせる
-
+	
+	new_zones.copyTo(zones);
 }
 
 /**
