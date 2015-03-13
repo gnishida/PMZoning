@@ -589,6 +589,35 @@ RoadEdgeDesc GraphUtil::getEdge(RoadGraph& roads, int index, bool onlyValidEdge)
 }
 
 /**
+ * 指定された点に最も近いエッジを返却する。
+ *
+ * @param roads			道路グラフ
+ * @param pt			この点に最も近いエッジを返却する
+ * @param roadType		この道路タイプのみを対象とする
+ * @param dist [OUT]	最も近いエッジまでの距離を返却する
+ * @return				最も近いエッジ
+ */
+RoadEdgeDesc GraphUtil::findNearestEdge(RoadGraph& roads, const QVector2D& pt, int roadType, float& dist) {
+	dist = std::numeric_limits<float>::max();
+	RoadEdgeDesc min_e;
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		if (!roads.graph[*ei]->valid) continue;
+		if (roadType != 0 && !(roads.graph[*ei]->type & roadType)) continue;
+
+		QVector2D closestPt;
+		float d = distance(roads, pt, *ei, closestPt);
+		if (d < dist) {
+			dist = d;
+			min_e = *ei;
+		}
+	}
+
+	return min_e;
+}
+
+/**
  * Return the total lengths of the edges outing from the specified vertex.
  */
 float GraphUtil::getTotalEdgeLength(RoadGraph& roads, RoadVertexDesc v) {

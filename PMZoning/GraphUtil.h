@@ -50,6 +50,7 @@ public:
 	static bool hasEdge(RoadGraph& roads, RoadVertexDesc desc1, RoadVertexDesc desc2, bool onlyValidEdge = true);
 	static bool hasSimilarEdge(RoadGraph& roads, RoadVertexDesc desc1, RoadVertexDesc desc2, const Polyline2D &polyline);
 	static RoadEdgeDesc getEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge = true);
+	static RoadEdgeDesc findNearestEdge(RoadGraph& roads, const QVector2D& pt, int roadType, float& dist);
 	static void getOrderedPolyLine(RoadGraph& roads, RoadEdgeDesc e, std::vector<QVector2D>& polyline);
 	static Polyline2D orderPolyLine(RoadGraph& roads, RoadEdgeDesc e, RoadVertexDesc src);
 	static Polyline2D orderPolyLine(RoadGraph& roads, RoadEdgeDesc e, RoadVertexDesc src, float angle);
