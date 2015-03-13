@@ -3,6 +3,7 @@
 #include <vector>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include "RoadGraph.h"
 
 using namespace std;
 using namespace cv;
@@ -17,14 +18,15 @@ using namespace cv;
  */
 class PMZoning {
 private:
-	static enum { TYPE_RESIDENTIAL = 0, TYPE_COMMERCIAL, TYPE_INDUSTRIAL, TYPE_PARK };
+	static enum { TYPE_RESIDENTIAL = 0, TYPE_COMMERCIAL, TYPE_INDUSTRIAL, TYPE_PARK, TYPE_UNUSED };
 	int city_size;
 	int grid_size;
 	vector<float> zone_distribution;
 	Mat_<uchar> zones;
+	RoadGraph roads;
 
 public:
-	PMZoning(int city_size, int grid_size, vector<float>& zone_distribution);
+	PMZoning(int city_size, int grid_size, vector<float>& zone_distribution, RoadGraph& roads);
 	~PMZoning();
 
 	void update();

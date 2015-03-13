@@ -3,10 +3,11 @@
 
 #define NUM_COMPONENTS	4
 
-PMZoning::PMZoning(int city_size, int grid_size, vector<float>& zone_distribution) {
+PMZoning::PMZoning(int city_size, int grid_size, vector<float>& zone_distribution, RoadGraph& roads) {
 	this->city_size = city_size;
 	this->grid_size = grid_size;
 	this->zone_distribution = zone_distribution;
+	this->roads = roads;
 
 	zones = Mat_<uchar>::zeros(grid_size, grid_size);
 	initialZoning(zone_distribution);
@@ -33,6 +34,8 @@ void PMZoning::update() {
 
 	for (int r = 0; r < grid_size; ++r) {
 		for (int c = 0; c < grid_size; ++c) {
+			if (zones(r, c) == TYPE_UNUSED) continue;
+
 			int oldType = zones(r, c);
 
 			// 隣接８個のセルの、各タイプごとの比率を計算
@@ -63,6 +66,8 @@ void PMZoning::update() {
  */
 void PMZoning::save(char* filename) {
 	Mat m(grid_size, grid_size, CV_8UC3);
+
+	// ゾーンを表示
 	for (int r = 0; r < grid_size; ++r) {
 		for (int c = 0; c < grid_size; ++c) {
 			cv::Vec3b p;
@@ -74,8 +79,22 @@ void PMZoning::save(char* filename) {
 				p = cv::Vec3b(255, 0, 0);
 			} else if (zones(r, c) == TYPE_PARK) {			// 公園（緑色）
 				p = cv::Vec3b(85, 255, 0);
+			} else if (zones(r, c) == TYPE_UNUSED) {		// 使用不可（白色）
+				p = cv::Vec3b(255, 255, 255);
 			}
 			m.at<cv::Vec3b>(r, c) = p;
+		}
+	}
+
+	// 道路を表示
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		for (int i = 0; i < roads.graph[*ei]->polyline.size() - 1; ++i) {
+			QVector2D p1(roads.graph[*ei]->polyline[i].x(), roads.graph[*ei]->polyline[i].y());
+			QVector2D p2(roads.graph[*ei]->polyline[i+1].x(), roads.graph[*ei]->polyline[i+1].y());
+			p1 = p1 * (float)grid_size / city_size + QVector2D(grid_size, grid_size) * 0.5f;
+			p2 = p2 * (float)grid_size / city_size + QVector2D(grid_size, grid_size) * 0.5f;
+			cv::line(m, Point(p1.x(), p1.y()), Point(p2.x(), p2.y()), Scalar(0, 160, 0), 1);
 		}
 	}
 
@@ -99,13 +118,17 @@ void PMZoning::computeMooreNeighborhood(int r, int c, vector<int>& neighbors) {
 			if (cc < 0 || cc >= grid_size) continue;
 			if (rr == r && cc == c) continue;
 			
-			neighbors[zones(rr, cc)]++;
+			if (zones(rr, cc) < NUM_COMPONENTS) {
+				neighbors[zones(rr, cc)]++;
+			}
 		}
 	}
 }
 
 /**
- * 適当に、初期ゾーンを決定する。
+ * 指定された配分率に基づき、ランダムに初期ゾーンを決定する。
+ *
+ * @param zone_distribution		ゾーンタイプの配分率
  */
 void PMZoning::initialZoning(vector<float>& zone_distribution) {
 	assert(zone_distribution.size() == NUM_COMPONENTS);

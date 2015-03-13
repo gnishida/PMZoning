@@ -27,6 +27,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionLoadRoads"/>
     <addaction name="actionStart"/>
     <addaction name="actionExit"/>
    </widget>
@@ -49,6 +50,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionLoadRoads">
+   <property name="text">
+    <string>Load Roads</string>
    </property>
   </action>
  </widget>
