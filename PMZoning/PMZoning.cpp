@@ -30,32 +30,40 @@ PMZoning::~PMZoning() {
  * 
  */
 void PMZoning::update() {
-	vector<int> histogram(NUM_COMPONENTS, 0);
-
-	vector<float> needs(NUM_COMPONENTS);
-	for (int i = 0; i < NUM_COMPONENTS; ++i) {
-		needs[i] = 0;
-	}
-
 	Mat_<uchar> new_zones(zones.size());
 
 	for (int r = 0; r < grid_size; ++r) {
 		for (int c = 0; c < grid_size; ++c) {
 			if (zones(r, c) == TYPE_UNUSED) continue;
-
-			int oldType = zones(r, c);
-
+						
 			// 隣接８個のセルの、各タイプごとの比率を計算
-			vector<int> neighbors;
-			computeMooreNeighborhood(r, c, neighbors);
+			vector<float> neighbors;
+			computeMooreNeighborhood(r, c, neighbors, true);		
+
+#if 0
+			// probabilistic
+			vector<float> prob(NUM_COMPONENTS);
+			prob[0] = neighbors[TYPE_RESIDENTIAL] * 1.6f + 1.0f / (1.0f + expf(-needs[TYPE_RESIDENTIAL])) - 0.5f;
+			prob[1] = neighbors[TYPE_COMMERCIAL] * 0.9f + accessibility(r, c) * 0.7f + 1.0f / (1.0f + expf(-needs[TYPE_COMMERCIAL])) - 0.5f;
+			prob[2] = neighbors[TYPE_INDUSTRIAL] * 1.2f + accessibility(r, c) * 0.4f + 1.0f / (1.0f + expf(-needs[TYPE_INDUSTRIAL])) - 0.5f;
+			prob[3] = neighbors[TYPE_PARK] * 1.6f + 1.0 / (1.0f + expf(-needs[TYPE_PARK])) - 0.5f;
+
+			prob[1] = max(0.0f, prob[1]);
+			prob[2] = max(0.0f, prob[2]);
+			prob[3] = max(0.0f, prob[3]);
+			prob[0] = 1.0f - prob[1] - prob[2] - prob[3];
+
+			new_zones(r, c) = Util::sampleFromPdf(prob);
+			
+#endif
 
 #if 1
 			// simple + accessibility
-			if (neighbors[TYPE_COMMERCIAL] + accessibility(r, c) * 2.0f >= Util::genRand(1, 6) + 4.0 / (1.0f + expf(needs[TYPE_COMMERCIAL]))) {
+			if (neighbors[TYPE_COMMERCIAL] * 1.6f + accessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_COMMERCIAL])) - 1.0f >= Util::genRand(0, 1)) {
 				new_zones(r, c) = TYPE_COMMERCIAL;
-			} else if (neighbors[TYPE_INDUSTRIAL] + accessibility(r, c) * 2.0f >= Util::genRand(1, 6) + 4.0 / (1.0f + expf(needs[TYPE_INDUSTRIAL]))) {
+			} else if (neighbors[TYPE_INDUSTRIAL] * 1.6f + accessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_INDUSTRIAL])) - 1.0f >= Util::genRand(0, 1)) {
 				new_zones(r, c) = TYPE_INDUSTRIAL;
-			} else if (neighbors[TYPE_PARK] >= Util::genRand(1, 3) + 4.0 / (1.0f + expf(needs[TYPE_PARK]))) {
+			} else if (neighbors[TYPE_PARK] * 4.0f + 2.0 / (1.0f + expf(-needs[TYPE_PARK])) - 2.5f >= Util::genRand(0, 1)) {
 				new_zones(r, c) = TYPE_PARK;
 			} else {
 				new_zones(r, c) = TYPE_RESIDENTIAL;
@@ -76,8 +84,8 @@ void PMZoning::update() {
 #endif
 
 			// ゾーンタイプのニーズを更新
-			needs[oldType]++;
-			needs[new_zones(r, c)]--;
+			needs[zones(r, c)]++;		// このセルから削除されたゾーンタイプのニーズは増加する
+			needs[new_zones(r, c)]--;	// このセルに使用されたゾーンタイプのニーズは減る
 		}
 	}
 	
@@ -142,9 +150,10 @@ void PMZoning::save(char* filename, int img_size) {
  * @param c			現在セルのX座標
  * @param neighbors	隣接８個のセルのゾーンタイプのヒストグラム
  */
-void PMZoning::computeMooreNeighborhood(int r, int c, vector<int>& neighbors) {
+void PMZoning::computeMooreNeighborhood(int r, int c, vector<float>& neighbors, bool normalize) {
 	neighbors.resize(NUM_COMPONENTS, 0);
 
+	int sum = 0;
 	for (int rr = r - 1; rr <= r + 1; ++rr) {
 		if (rr < 0 || rr >= grid_size) continue;
 		for (int cc = c - 1; cc <= c + 1; ++cc) {
@@ -153,7 +162,14 @@ void PMZoning::computeMooreNeighborhood(int r, int c, vector<int>& neighbors) {
 			
 			if (zones(rr, cc) < NUM_COMPONENTS) {
 				neighbors[zones(rr, cc)]++;
+				sum++;
 			}
+		}
+	}
+
+	if (normalize) {
+		for (int i = 0; i < neighbors.size(); ++i) {
+			neighbors[i] /= (float)sum;
 		}
 	}
 }
@@ -231,6 +247,21 @@ void PMZoning::initialZoning(vector<float>& zone_distribution) {
 			zones(r, c) = type;
 			expectedNums[type]--;
 		}
+	}
+
+	// ニーズを初期化
+	needs.resize(NUM_COMPONENTS, 0);
+}
+
+/**
+ * Logistic関数みたいな関数
+ * x=0の時の値がhになるようにする。
+ */
+float PMZoning::modifiedLogistic(float x, float h) {
+	if (x >= 0.0f) {
+		return 2.0f * (1.0f - h) / (1.0f + expf(-x)) - 1 + h * 2.0f;
+	} else {
+		return 2.0f * h / (1.0f + exp(-x));
 	}
 }
 
