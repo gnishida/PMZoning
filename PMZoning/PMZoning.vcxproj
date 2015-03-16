@@ -158,6 +158,7 @@
     <ClCompile Include="RoadGraph.cpp" />
     <ClCompile Include="RoadVertex.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="Zoning.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -214,6 +215,7 @@
     <ClInclude Include="RoadGraph.h" />
     <ClInclude Include="RoadVertex.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="Zoning.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.qrc">

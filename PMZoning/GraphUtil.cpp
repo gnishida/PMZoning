@@ -1908,7 +1908,7 @@ void GraphUtil::saveRoads(RoadGraph& roads, const QString& filename) {
  * Copy the road graph.
  * Note: This function copies all the vertices and edges including the invalid ones. Thus, their IDs will be preserved.
  */
-void GraphUtil::copyRoads(RoadGraph& srcRoads, RoadGraph& dstRoads) {
+void GraphUtil::copyRoads(const RoadGraph& srcRoads, RoadGraph& dstRoads) {
 	dstRoads.clear();
 
 	QMap<RoadVertexDesc, RoadVertexDesc> conv;

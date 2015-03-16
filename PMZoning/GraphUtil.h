@@ -92,7 +92,7 @@ public:
 	static void saveRoads(RoadGraph& roads, const QString& filename);
 
 	// The entire graph related functions
-	static void copyRoads(RoadGraph& srcRoads, RoadGraph& dstRoads);
+	static void copyRoads(const RoadGraph& srcRoads, RoadGraph& dstRoads);
 	static void mergeRoads(RoadGraph& roads1, RoadGraph& roads2);
 	static BBox getAABoundingBox(RoadGraph& roads, bool checkPolyline = false);
 	static BBox getBoudingBox(RoadGraph& roads, float theta1, float theta2, float theta_step = 0.087f);

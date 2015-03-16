@@ -28,12 +28,21 @@
      <string>File</string>
     </property>
     <addaction name="actionLoadRoads"/>
-    <addaction name="actionGenerateZoningByPM"/>
-    <addaction name="actionGenerateManyZoningsByPM"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuZoning">
+    <property name="title">
+     <string>Zoning</string>
+    </property>
+    <addaction name="actionGenerateZoningByPM"/>
+    <addaction name="actionGenerateManyZoningsByPM"/>
+    <addaction name="actionFindBestZoningByPM"/>
+    <addaction name="separator"/>
+    <addaction name="actionGenerateRandomPreferences"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuZoning"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -44,11 +53,6 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionGenerateZoningByPM">
-   <property name="text">
-    <string>Generate Zoning By PM</string>
-   </property>
-  </action>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
@@ -59,9 +63,24 @@
     <string>Load Roads</string>
    </property>
   </action>
+  <action name="actionGenerateZoningByPM">
+   <property name="text">
+    <string>Generate Zoning By PM</string>
+   </property>
+  </action>
   <action name="actionGenerateManyZoningsByPM">
    <property name="text">
     <string>Generate Many Zonings By PM</string>
+   </property>
+  </action>
+  <action name="actionFindBestZoningByPM">
+   <property name="text">
+    <string>Find Best Zoning By PM</string>
+   </property>
+  </action>
+  <action name="actionGenerateRandomPreferences">
+   <property name="text">
+    <string>Generate Random Preferences</string>
    </property>
   </action>
  </widget>

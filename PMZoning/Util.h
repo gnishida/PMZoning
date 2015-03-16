@@ -60,4 +60,34 @@ public:
 
 	static bool getIrregularBisector(const QVector3D& p0, const QVector3D& p1, const QVector3D& p2, float d01, float d12, QVector3D& intPt);
 	static bool getIrregularBisector(const QVector2D& p0, const QVector2D& p1, const QVector2D& p2, float d01, float d12, QVector2D& intPt);
+
+	/**
+	 * dot productを計算する。
+	 * わざと、v2の方がサイズが大きくても許容している。
+	 * v2のサイズが大きい場合は、v1のサイズの分までで、dot productを計算する。
+	 */
+	template<typename T>
+	static float dot(std::vector<T> v1, std::vector<T> v2) {
+		float ret = 0.0f;
+
+		assert(v1.size() <= v2.size());
+
+		for (int i = 0; i < v1.size(); ++i) {
+			ret += v1[i] * v2[i];
+		}
+
+		return ret;
+	}
+
+	template<typename T>
+	static void normalize(std::vector<T>& v) {
+		T len = dot(v, v);
+
+		if (len == 0) return;
+		len = sqrt(len);
+
+		for (int i = 0; i < v.size(); ++i) {
+			v[i] /= len;
+		}
+	}
 };
