@@ -13,12 +13,36 @@ PMZoning::PMZoning(int city_size, int grid_size, vector<float>& zone_distributio
 	this->roads = roads;
 
 	zones = Mat_<uchar>::zeros(grid_size, grid_size);
-	accessibility = Mat_<float>::zeros(grid_size, grid_size);
-	initialZoning(zone_distribution);
-	computeAccessibility();
+	majorAccessibility = Mat_<float>::zeros(grid_size, grid_size);
+	minorAccessibility = Mat_<float>::zeros(grid_size, grid_size);
+
+	computeAccessibility(0);
+	computeAccessibility(1);
 }
 
-PMZoning::~PMZoning() {
+/**
+ * 指定された配分率に基づき、ランダムに初期ゾーンを決定する。
+ *
+ * @param zone_distribution		ゾーンタイプの配分率
+ */
+void PMZoning::initialZoning(vector<float>& zone_distribution) {
+	assert(zone_distribution.size() == NUM_COMPONENTS);
+
+	vector<float> expectedNums(NUM_COMPONENTS);
+	for (int i = 0; i < NUM_COMPONENTS; ++i) {
+		expectedNums[i] = grid_size * grid_size * zone_distribution[i];
+	}
+
+	for (int r = 0; r < grid_size; ++r) {
+		for (int c = 0; c < grid_size; ++c) {
+			unsigned char type = Util::sampleFromPdf(expectedNums);
+			zones(r, c) = type;
+			expectedNums[type]--;
+		}
+	}
+
+	// ニーズを初期化
+	needs.resize(NUM_COMPONENTS, 0);
 }
 
 /**
@@ -59,14 +83,14 @@ void PMZoning::update() {
 
 #if 1
 			// simple + accessibility
-			if (neighbors[TYPE_COMMERCIAL] * 1.6f + accessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_COMMERCIAL])) - 1.0f >= Util::genRand(0, 1)) {
+			if (neighbors[TYPE_COMMERCIAL] * 1.6f + majorAccessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_COMMERCIAL])) - 1.0f >= Util::genRand(0, 1)) {
 				new_zones(r, c) = TYPE_COMMERCIAL;
-			} else if (neighbors[TYPE_INDUSTRIAL] * 1.6f + accessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_INDUSTRIAL])) - 1.0f >= Util::genRand(0, 1)) {
+			} else if (neighbors[TYPE_INDUSTRIAL] * 1.6f + majorAccessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_INDUSTRIAL])) - 1.0f >= Util::genRand(0, 1)) {
 				new_zones(r, c) = TYPE_INDUSTRIAL;
-			} else if (neighbors[TYPE_PARK] * 4.0f + 2.0 / (1.0f + expf(-needs[TYPE_PARK])) - 2.5f >= Util::genRand(0, 1)) {
-				new_zones(r, c) = TYPE_PARK;
-			} else {
+			} else if (neighbors[TYPE_RESIDENTIAL] * 1.2f + minorAccessibility(r, c) * 0.4f + 0.8f / (1.0f + expf(-needs[TYPE_RESIDENTIAL])) - 1.0f >= Util::genRand(0, 1)) {\
 				new_zones(r, c) = TYPE_RESIDENTIAL;
+			} else {
+				new_zones(r, c) = TYPE_PARK;
 			}
 #endif
 
@@ -178,15 +202,25 @@ void PMZoning::computeMooreNeighborhood(int r, int c, vector<float>& neighbors, 
  * 道路までのaccessibilityを計算する。
  * dist = 直近のAvenue道路までの距離とした時、accessibility = 1 / (1 + dist)
  * 「Real and virtual uban design」のスライドにあった計算式を使っている。
+ * ただし、majorなら、avenue、highwayのみを考慮、minorなら、local streetのみを考慮する。
+ *
+ * @param type			0 - major / 1 - minor
  */
-void PMZoning::computeAccessibility() {
+void PMZoning::computeAccessibility(int type) {
 	// 距離係数（この距離離れると、accessibilityが半減するというイメージ）
-	const float distanceFactor = 100.0f;
+	const float distanceFactor = 50.0f;
+
+	int roadType;
+	if (type == 0) {
+		roadType = RoadEdge::TYPE_AVENUE | RoadEdge::TYPE_HIGHWAY;
+	} else {
+		roadType = RoadEdge::TYPE_STREET;
+	}
 
 	Mat_<uchar> data = Mat_<uchar>::zeros(grid_size, grid_size);
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
-		if (roads.graph[*ei]->type & (RoadEdge::TYPE_AVENUE | RoadEdge::TYPE_HIGHWAY)) {
+		if (roads.graph[*ei]->type & roadType) {
 			Polyline2D polyline = GraphUtil::finerEdge(roads, *ei, 1.0f);
 			for (int i = 0; i < polyline.size(); ++i) {
 				QVector2D pt = cityToGrid(polyline[i]);
@@ -216,41 +250,28 @@ void PMZoning::computeAccessibility() {
 				dist = (float)city_size / grid_size * 0.25f;
 			}*/
 
-			accessibility(r, c) = 1.0f / (1.0f + dist / distanceFactor);
+			if (type == 0) {
+				majorAccessibility(r, c) = 1.0f / (1.0f + dist / distanceFactor);
+			} else {
+				minorAccessibility(r, c) = 1.0f / (1.0f + dist / distanceFactor);
+			}
 		}
 	}
 
 	// 画像として保存しておく
 	cv::Mat m;
-	accessibility.convertTo(m, CV_8U, 255.0f);
+	if (type == 0) {
+		majorAccessibility.convertTo(m, CV_8U, 255.0f);
+	} else {
+		minorAccessibility.convertTo(m, CV_8U, 255.0f);
+	}
 	cv::flip(m, m, 0);
 
-	cv::imwrite("accessibility.jpg", m);
-}
-
-/**
- * 指定された配分率に基づき、ランダムに初期ゾーンを決定する。
- *
- * @param zone_distribution		ゾーンタイプの配分率
- */
-void PMZoning::initialZoning(vector<float>& zone_distribution) {
-	assert(zone_distribution.size() == NUM_COMPONENTS);
-
-	vector<float> expectedNums(NUM_COMPONENTS);
-	for (int i = 0; i < NUM_COMPONENTS; ++i) {
-		expectedNums[i] = grid_size * grid_size * zone_distribution[i];
+	if (type == 0) {
+		cv::imwrite("majorAccessibility.jpg", m);
+	} else {
+		cv::imwrite("minorAccessibility.jpg", m);
 	}
-
-	for (int r = 0; r < grid_size; ++r) {
-		for (int c = 0; c < grid_size; ++c) {
-			unsigned char type = Util::sampleFromPdf(expectedNums);
-			zones(r, c) = type;
-			expectedNums[type]--;
-		}
-	}
-
-	// ニーズを初期化
-	needs.resize(NUM_COMPONENTS, 0);
 }
 
 /**

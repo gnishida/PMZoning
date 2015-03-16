@@ -24,20 +24,20 @@ private:
 	vector<float> zone_distribution;
 	Mat_<uchar> zones;
 	RoadGraph roads;
-	Mat_<float> accessibility;
+	Mat_<float> majorAccessibility;
+	Mat_<float> minorAccessibility;
 	vector<float> needs;
 
 public:
 	PMZoning(int city_size, int grid_size, vector<float>& zone_distribution, RoadGraph& roads);
-	~PMZoning();
 
+	void initialZoning(vector<float>& zone_distribution);
 	void update();
 	void save(char* filename, int img_size);
 
 private:
 	void computeMooreNeighborhood(int r, int c, vector<float>& neighbors, bool normalize);
-	void computeAccessibility();
-	void initialZoning(vector<float>& zone_distribution);
+	void computeAccessibility(int type);
 	float modifiedLogistic(float x, float h);
 	QVector2D gridToCity(const QVector2D& pt);
 	QVector2D cityToGrid(const QVector2D& pt);

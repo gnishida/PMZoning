@@ -17,8 +17,9 @@ public:
 	~MainWindow();
 
 public slots:
-	void onStart();
 	void onLoadRoads();
+	void onGenerateZoningByPM();
+	void onGenerateManyZoningsByPM();
 };
 
 #endif // MAINWINDOW_H

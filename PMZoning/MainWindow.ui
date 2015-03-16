@@ -28,7 +28,9 @@
      <string>File</string>
     </property>
     <addaction name="actionLoadRoads"/>
-    <addaction name="actionStart"/>
+    <addaction name="actionGenerateZoningByPM"/>
+    <addaction name="actionGenerateManyZoningsByPM"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -42,9 +44,9 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionStart">
+  <action name="actionGenerateZoningByPM">
    <property name="text">
-    <string>Start</string>
+    <string>Generate Zoning By PM</string>
    </property>
   </action>
   <action name="actionExit">
@@ -55,6 +57,11 @@
   <action name="actionLoadRoads">
    <property name="text">
     <string>Load Roads</string>
+   </property>
+  </action>
+  <action name="actionGenerateManyZoningsByPM">
+   <property name="text">
+    <string>Generate Many Zonings By PM</string>
    </property>
   </action>
  </widget>
