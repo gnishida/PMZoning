@@ -28,8 +28,8 @@ public:
 	void cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu, vector<int>& groups);
 
 private:
-	int findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, double& min_dist);
-	int findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, const Mat& invCovar);
+	//int findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, double& min_dist);
+	int findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, const Mat& invCovar, double& min_dist);
 	int sampleFromCdf(std::vector<double> &cdf);
 	int sampleFromPdf(std::vector<double> &pdf);
 };

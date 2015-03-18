@@ -19,6 +19,15 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 	mu = Mat_<double>(num_clusters, dimensions);
 	groups.resize(samples.rows, -1);
 
+	// サンプルの共分散行列を計算する
+	Mat covar, mean;
+	calcCovarMatrix(samples, covar, mean, CV_COVAR_NORMAL | CV_COVAR_ROWS);
+	covar = covar / (samples.rows - 1);
+
+	// 共分散行列の逆行列を計算する
+	Mat invCovar;
+	cv::invert(covar, invCovar, DECOMP_SVD);
+
 	// 初期クラスタリング（K-means++アルゴリズムで、初期クラスタ中心を決定する）
 	{
 		int s = (double)rand() / RAND_MAX * samples.rows;
@@ -31,7 +40,7 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 			vector<double> pdf;
 			for (int i = 0; i < samples.rows; ++i) {
 				double dist;
-				int group_id = findNearestCenter(samples.row(i), mu2, dist);
+				int group_id = findNearestCenter(samples.row(i), mu2, invCovar, dist);
 				pdf.push_back(dist * dist);
 			}
 
@@ -46,7 +55,7 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 		vector<int> num_members(num_clusters, 0);
 		for (int i = 0; i < samples.rows; ++i) {
 			double dist;
-			int new_group = findNearestCenter(samples.row(i), mu, dist);
+			int new_group = findNearestCenter(samples.row(i), mu, invCovar, dist);
 			num_members[new_group]++;
 
 			if (new_group != groups[i]) {
@@ -63,15 +72,6 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 		}
 	}
 
-	// サンプルの共分散行列を計算する
-	Mat covar, mean;
-	calcCovarMatrix(samples, covar, mean, CV_COVAR_NORMAL | CV_COVAR_ROWS);
-	covar = covar / (samples.rows - 1);
-
-	// 共分散行列の逆行列を計算する
-	Mat invCovar;
-	cv::invert(covar, invCovar, DECOMP_SVD);
-
 	bool updated = true;
 	int count = 0;
 	for (int iter = 0; iter < max_iterations && updated; ++iter) {
@@ -80,9 +80,8 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 		// 各サンプルに最も近いクラスタを求める
 		vector<int> num_members(num_clusters, 0);
 		for (int i = 0; i < samples.rows; ++i) {
-			double min_dist = std::numeric_limits<double>::max();
-
-			int group_id = findNearestCenter(samples.row(i), mu, invCovar);
+			double dist;
+			int group_id = findNearestCenter(samples.row(i), mu, invCovar, dist);
 			num_members[group_id]++;
 
 			if (group_id != groups[i]) {
@@ -109,6 +108,7 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
  * @param min_dist [OUT]	最近傍クラスタへの距離
  * @return					最近傍のクラスタ中心のID
  */
+/*
 int KMeans::findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, double& min_dist) {
 	min_dist = std::numeric_limits<double>::max();
 
@@ -125,21 +125,23 @@ int KMeans::findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu
 
 	return group_id;
 }
+*/
 
 /**
  * 与えられたサンプルに対して、Mahalanobis距離を使って、最も近いクラスタ中心のIDを返却する。
  *
- * @param sample		サンプル
- * @param mu			クラスタ中心
- * @param invCovar		共分散行列の逆行列
- * @return				最近傍のクラスタ中心のID
+ * @param sample			サンプル
+ * @param mu				クラスタ中心
+ * @param invCovar			共分散行列の逆行列
+ * @param min_dist [OUT]	最近傍クラスタ中心への距離
+ * @return					最近傍のクラスタ中心のID
  */
-int KMeans::findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, const Mat& invCovar) {
-	double min_dist = std::numeric_limits<double>::max();
+int KMeans::findNearestCenter(const Mat_<double>& sample, const Mat_<double>& mu, const Mat& invCovar, double& min_dist) {
+	min_dist = std::numeric_limits<double>::max();
 
 	int group_id = -1;
 
-	for (int j = 0; j < num_clusters; ++j) {
+	for (int j = 0; j < mu.rows; ++j) {
 		double dist = cv::Mahalanobis(sample, mu.row(j), invCovar);
 
 		if (dist < min_dist) {
