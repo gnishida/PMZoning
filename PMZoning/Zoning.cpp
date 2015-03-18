@@ -128,55 +128,38 @@ float Zoning::computeScore(vector<pair<float, vector<float> > >& preferences) {
 }
 
 /**
- * preferencesベクトルを、指定された数にグループ分けする。
- *
- * @param preferences		preferenceベクトルのリスト (２次元配列 [ユーザID][要素番号])
- * @param num				グループの数
- * @return					各グループの重みと、代表的なpreferenceベクトル（重みの合計は1となる)
- */
-vector<pair<float, vector<float> > > Zoning::clusterPreferences(vector<vector<float> >& preferences, int num) {
-	vector<pair<float, vector<float> > > groups;
-
-	// まず、各コンポーネント毎の分散を計算し、それが1となるようnormalizeする
-	// なお、この考え方は、「マハラノビス距離」と考えることもできる
-	for (int k = 0; k < NUM_COMPONENTS; ++k) {
-		for (int i = 0; i < preferences.size(); ++i) {
-
-		}
-	}
-
-	// K-meansクラスタリングを実施
-}
-
-/**
  * ランダムにpreferenceベクトルをnum個作成する。
  *
  * @param num		個数
  * @return			生成されたpreferenceベクトルのリスト
  */
-vector<vector<float> > Zoning::generateRandomPreferences(int num) {
-	vector<vector<float> > templates(3, vector<float>(NUM_COMPONENTS));
-	templates[0][0] = 0.2; templates[0][1] = 0.5; templates[0][2] = -1; templates[0][3] = 0.2; templates[0][4] = -0.5; templates[0][5] = 0.5;
-	templates[1][0] = 0.0; templates[1][1] = 1.0; templates[1][2] = -1; templates[1][3] = 0.0; templates[1][4] = 0.0; templates[1][5] = 1.0;
-	templates[2][0] = 1.0; templates[2][1] = 0.2; templates[2][2] = -1; templates[2][3] = 0.0; templates[2][4] = 0.0; templates[2][5] = 0.5;
-	for (int u = 0; u < 3; ++u) {
-		Util::normalize(templates[u]);
+Mat_<double> Zoning::generateRandomPreferences(int num) {
+	// 3つの典型的なpreferenceベクトルを用意する
+	Mat_<double> templates = (Mat_<double>(3, NUM_COMPONENTS) <<
+		0.2, 0.5, -1, 0.2, -0.5, 0.5,
+		0.0, 1.0, -1, 0.0, 0.0, 1.0,
+		1.0, 0.2, -1, 0.0, 0.0, 0.5);
+
+	// 各行について、normalize
+	for (int u = 0; u < templates.rows; ++u) {
+		Mat_<double> temp = templates.rowRange(u, u + 1);
+		normalize(templates.row(u), temp);
 	}
 
-	vector<vector<float> > preferences;
-	for (int u = 0; u < num; ++u) {
-		vector<float> preference(NUM_COMPONENTS, 0.0f);
+	// 3つの典型的なpreferenceベクトルを、ランダムに加重平均して、
+	// num個のpreferenceベクトルを生成する。
+	Mat_<double> preferences = Mat_<double>::zeros(num, NUM_COMPONENTS);
+	for (int u = 0; u < preferences.rows; ++u) {
+		//vector<float> preference(NUM_COMPONENTS, 0.0f);
+		Mat_<double> temp = preferences.rowRange(u, u + 1);
 
-		for (int t = 0; t < templates.size(); ++t) {
+		for (int t = 0; t < templates.rows; ++t) {
 			float w = Util::genRand();
 
-			for (int k = 0; k < NUM_COMPONENTS; ++k) {
-				preference[k] += w * templates[t][k];
-			}
+			temp += templates.row(t) * w;
 		}
 
-		Util::normalize(preference);
-		preferences.push_back(preference);
+		normalize(temp, temp);
 	}
 
 	return preferences;

@@ -2,7 +2,10 @@
 #include "PMZoning.h"
 #include "GraphUtil.h"
 #include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
 #include "Util.h"
+#include "KMeans.h"
 #include <QElapsedTimer>
 
 using namespace std;
@@ -166,20 +169,41 @@ void MainWindow::onFindBestZoningByPM() {
 }
 
 /**
- * ランダムに、preferenceベクトルを10000人分作成する。
+ * ランダムに、preferenceベクトルを10000人分作成し、10個のグループにクラスタリングする。
  */
 void MainWindow::onGenerateRandomPreferences() {
-	vector<vector<float> > preferences = Zoning::generateRandomPreferences(10000);
+	Mat_<double> preferences = Zoning::generateRandomPreferences(10000);
+
+	// K-meansクラスタリング
+	KMeans kmeans(6, 20);
+	Mat_<double> mu;
+	vector<int> groups;
+	kmeans.cluster(preferences, 40, mu, groups);
+
+	// 各クラスタの割合を計算する
+	vector<float> ratio(mu.rows, 0.0f);
+	for (int u = 0; u < groups.size(); ++u) {
+		ratio[groups[u]]++;
+	}
+	for (int j = 0; j < ratio.size(); ++j) {
+		ratio[j] /= (float)groups.size();
+	}
 
 	QString filename = QFileDialog::getSaveFileName(this, tr("Save preference file..."), "", tr("Preference files (*.txt)"));
 	if (filename.isEmpty()) return;
 
 	QFile file(filename);
+	if (!file.open(QIODevice::WriteOnly)) return;
+
 	QTextStream out(&file);
-	for (int i = 0; i < preferences.size(); ++i) {
-		for (int k = 0; k < preferences[i].size(); ++k) {
+	for (int j = 0; j < mu.rows; ++j) {
+		if (ratio[j] == 0.0f) continue;
+
+		out << ratio[j] << "\t";
+
+		for (int k = 0; k < mu.cols; ++k) {
 			if (k > 0) out << ",";
-			out << preferences[i][k];
+			out << mu(j, k);
 		}
 		out << endl;
 	}

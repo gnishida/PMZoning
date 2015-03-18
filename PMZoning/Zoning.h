@@ -32,8 +32,7 @@ public:
 	Mat_<uchar> zoneMap() { return zones.clone(); }
 	void computePropertyVectors();
 	float computeScore(vector<pair<float, vector<float> > >& preferences);
-	static vector<pair<float, vector<float> > > clusterPreferences(vector<vector<float> >& preferences, int num);
-	static vector<vector<float> > generateRandomPreferences(int num);
+	static Mat_<double> generateRandomPreferences(int num);
 	void save(char* filename, int img_size);
 
 protected:
