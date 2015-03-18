@@ -19,16 +19,13 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 	mu = Mat_<double>(samples.rows, dimensions);
 	groups.resize(samples.rows, -1);
 
-	// サンプルの各要素について、最小値と最大値を計算する
-	vector<double> mins, maxs;
-	computeMinMax(samples, mins, maxs);
-
-	// ランダムに、クラスタ中心を決定する
+	// ランダムにサンプルを選び、クラスタ中心とする
 	mu = Mat_<double>(num_clusters, dimensions);
 	for (int j = 0; j < num_clusters; ++j) {
-		for (int k = 0; k < dimensions; ++k) {
-			mu(j, k) = (((double)rand() / RAND_MAX) * 0.5 + 0.25) * (maxs[k] - mins[k]) + mins[k];
-		}
+		int s = (double)rand() / RAND_MAX * samples.rows;
+
+		Mat_<double> temp = mu.rowRange(j, j + 1);
+		samples.row(s).copyTo(temp);
 	}
 
 	// 初期クラスタリング（最初の１回だけ、Euclidian距離を使用してクラスタリング）
@@ -109,20 +106,3 @@ void KMeans::cluster(Mat_<double> samples, int max_iterations, Mat_<double>& mu,
 	}
 }
 
-/**
- * 各要素の最小値と最大値を計算する。
- */
-void KMeans::computeMinMax(Mat_<double> samples, vector<double>& mins, vector<double>& maxs) {
-	mins.resize(dimensions);
-	maxs.resize(dimensions);
-
-	for (int k = 0; k < dimensions; ++k) {
-		mins[k] = std::numeric_limits<double>::max();
-		maxs[k] = -std::numeric_limits<double>::max();
-
-		for (int i = 0; i < samples.rows; ++i) {
-			mins[k] = min(samples(i, k), mins[k]);
-			maxs[k] = max(samples(i, k), maxs[k]);
-		}
-	}
-}
