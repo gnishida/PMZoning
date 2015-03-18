@@ -175,7 +175,7 @@ void MainWindow::onGenerateRandomPreferences() {
 	Mat_<double> preferences = Zoning::generateRandomPreferences(10000);
 
 	// K-meansクラスタリング
-	KMeans kmeans(6, 20);
+	KMeans kmeans(6, 10);
 	Mat_<double> mu;
 	vector<int> groups;
 	kmeans.cluster(preferences, 40, mu, groups);
