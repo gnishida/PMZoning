@@ -1,5 +1,6 @@
 ﻿#include "MainWindow.h"
 #include "PMZoning.h"
+#include "BMZoning.h"
 #include "GraphUtil.h"
 #include <QFileDialog>
 #include <QFile>
@@ -17,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, 
 	connect(ui.actionGenerateZoningByPM, SIGNAL(triggered()), this, SLOT(onGenerateZoningByPM()));
 	connect(ui.actionGenerateManyZoningsByPM, SIGNAL(triggered()), this, SLOT(onGenerateManyZoningsByPM()));
 	connect(ui.actionFindBestZoningByPM, SIGNAL(triggered()), this, SLOT(onFindBestZoningByPM()));
+	connect(ui.actionGenerateZoningByBM, SIGNAL(triggered()), this, SLOT(onGenerateZoningByBM()));
 
 	connect(ui.actionGenerateRandomPreferences, SIGNAL(triggered()), this, SLOT(onGenerateRandomPreferences()));
 
@@ -166,6 +168,38 @@ void MainWindow::onFindBestZoningByPM() {
 	printf("PM: %lf sec\n", pmComputation / 1000.0);
 	printf("property vector: %lf sec\n", propertyComputation / 1000.0);
 	printf("score: %lf sec\n", scoreComputation / 1000.0);
+}
+
+/**
+ * Behavioral modelingでゾーニングを生成する
+ * Carlos論文を参照。
+ */
+void MainWindow::onGenerateZoningByBM() {
+	/*
+	QString filename = QFileDialog::getOpenFileName(this, tr("Load preference file..."), "", tr("Preference files (*.txt)"));
+	if (filename.isEmpty()) return;
+
+	vector<pair<float, vector<float> > > preferences = readPreferences(filename.toUtf8().data());
+	*/
+
+	std::vector<float> zone_distribution(4);
+	zone_distribution[0] = 0.7f; zone_distribution[1] = 0.1f; zone_distribution[2] = 0.1f; zone_distribution[3] = 0.1f;
+	BMZoning bm(5000, 64, zone_distribution, roads);
+
+	for (int iter = 0; iter < 40; ++iter) {
+		char filename[256];
+		sprintf(filename, "zoning/zone_%d.jpg", iter);
+		bm.save(filename, 400);
+
+		bm.update();
+	}
+
+	/*
+	pm.computePropertyVectors();
+
+	float score = pm.computeScore(preferences);
+	printf("Score: %lf\n", score);
+	*/
 }
 
 /**

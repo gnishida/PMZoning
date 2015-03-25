@@ -38,6 +38,7 @@
     <addaction name="actionGenerateZoningByPM"/>
     <addaction name="actionGenerateManyZoningsByPM"/>
     <addaction name="actionFindBestZoningByPM"/>
+    <addaction name="actionGenerateZoningByBM"/>
     <addaction name="separator"/>
     <addaction name="actionGenerateRandomPreferences"/>
    </widget>
@@ -81,6 +82,11 @@
   <action name="actionGenerateRandomPreferences">
    <property name="text">
     <string>Generate Random Preferences</string>
+   </property>
+  </action>
+  <action name="actionGenerateZoningByBM">
+   <property name="text">
+    <string>Generate Zoning By BM</string>
    </property>
   </action>
  </widget>

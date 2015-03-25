@@ -25,6 +25,7 @@ public slots:
 	void onGenerateZoningByPM();
 	void onGenerateManyZoningsByPM();
 	void onFindBestZoningByPM();
+	void onGenerateZoningByBM();
 	void onGenerateRandomPreferences();
 };
 
