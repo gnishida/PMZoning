@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Zoning.h"
 #include <vector>
@@ -12,6 +12,12 @@ using namespace cv;
 
 /**
  * Procedural modeling to generate zoning
+ * Proceduralとは言っても、cellular automataライクなアルゴリズムによって、
+ * zoningを更新していく。
+ *
+ * @author	Gen Nishida
+ * @date	3/25/2015
+ * @version	1.0
  */
 class PMZoning : public Zoning {
 private:

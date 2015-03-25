@@ -18,8 +18,8 @@ protected:
 	/** propertyベクトルの要素数の数 */
 	static const int NUM_COMPONENTS;
 
-	int city_size;
-	int grid_size;
+	int city_size;		// cityの一辺の距離 [m]
+	int grid_size;		// グリッドの一辺のサイズ
 	Mat_<uchar> zones;
 	RoadGraph roads;
 	vector<float> zone_distribution;

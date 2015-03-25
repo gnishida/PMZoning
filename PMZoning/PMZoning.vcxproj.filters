@@ -89,6 +89,9 @@
     <ClCompile Include="KMeans.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BMZoning.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -145,6 +148,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="KMeans.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BMZoning.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
